@@ -13,7 +13,7 @@ const Home = () => {
   </div>
     <Gif />
     <div className="flex justify-center gap-5 mt-10">
-      <Link to="/home" className="bg-white py-2 px-10 rounded-full font-bold text-black">Login</Link>
+      <Link to="/login" className="bg-white py-2 px-10 rounded-full font-bold text-black">Login</Link>
       <Link to="/signup" className="bg-white py-2 px-10 rounded-full font-bold text-black">Register</Link>
     </div>
    </>
