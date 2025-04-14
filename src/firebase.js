@@ -1,6 +1,17 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  setPersistence, 
+  browserLocalPersistence,
+  onAuthStateChanged
+} from "firebase/auth";
+import { 
+  getFirestore, 
+  serverTimestamp, 
+  doc, 
+  setDoc 
+} from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -21,11 +32,40 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
-// Set persistence for auth (optional)
-import { setPersistence, browserLocalPersistence } from "firebase/auth";
+// Set persistence for auth
 setPersistence(auth, browserLocalPersistence)
   .catch((error) => {
     console.error("Error setting auth persistence:", error);
   });
 
-export { auth, googleProvider, db, storage };
+// User presence tracking
+const setupUserPresence = (user) => {
+  if (!user) return;
+
+  const userRef = doc(db, "users", user.uid);
+  const isOfflineForFirestore = {
+    status: 'offline',
+    lastChanged: serverTimestamp(),
+  };
+  const isOnlineForFirestore = {
+    status: 'online',
+    lastChanged: serverTimestamp(),
+  };
+
+  // Set user as online
+  setDoc(userRef, isOnlineForFirestore, { merge: true });
+  
+  // Set user as offline when they disconnect
+  window.addEventListener('beforeunload', () => {
+    setDoc(userRef, isOfflineForFirestore, { merge: true });
+  });
+};
+
+// Listen for auth state changes
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    setupUserPresence(user);
+  }
+});
+
+export { auth, googleProvider, db, storage, serverTimestamp };
